@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const app = express();
 
-// LIBERA ACESSO DO SEU SITE
+// 🔥 LIBERA ACESSO DO SEU SITE
 app.use(cors({
     origin: "*"
 }));

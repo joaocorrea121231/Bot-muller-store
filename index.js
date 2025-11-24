@@ -5,7 +5,7 @@ require("dotenv").config();
 
 const app = express();
 
-// Libera acesso do seu site
+// LIBERA ACESSO DO SEU SITE
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
@@ -19,9 +19,17 @@ const client = new Client({
 
 client.once("ready", () => {
     console.log(`Bot online como: ${client.user.tag}`);
+
+    // 🔥 TESTE: verificar tipo da categoria
+    const guild = client.guilds.cache.get(process.env.GUILD_ID);
+    const canal = guild.channels.cache.get(process.env.CATEGORY_ID);
+
+    console.log(">>> TESTE DO CANAL <<<");
+    console.log("ID:", process.env.CATEGORY_ID);
+    console.log("Nome:", canal?.name || "NÃO ENCONTRADO");
+    console.log("Tipo:", canal?.type);
 });
 
-// Rota principal de ticket
 app.post("/ticket", async (req, res) => {
     const { produto, preco, usuario, itens } = req.body;
 
@@ -64,33 +72,9 @@ Aguarde um atendente.
     }
 });
 
-// 🔥 Rota de TESTE para verificar criação de canal
-app.get("/test", async (req, res) => {
-    try {
-        const guild = client.guilds.cache.get(process.env.GUILD_ID);
-        const categoria = process.env.CATEGORY_ID;
-
-        const canal = await guild.channels.create({
-            name: "teste-bot",
-            type: 0,
-            parent: categoria
-        });
-
-        return res.json({ status: "Canal criado com sucesso!", channelID: canal.id });
-
-    } catch (e) {
-        console.error(e);
-        return res.json({
-            status: "Erro ao criar canal",
-            error: e.message
-        });
-    }
-});
-
-// Porta do Render
+// PORTA DO RENDER
 app.listen(process.env.PORT || 3000, () => {
     console.log("API rodando na porta " + (process.env.PORT || 3000));
 });
 
-// Login do bot
 client.login(process.env.BOT_TOKEN);

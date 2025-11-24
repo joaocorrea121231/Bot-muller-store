@@ -5,7 +5,6 @@ require("dotenv").config();
 
 const app = express();
 
-// LIBERA ACESSO DO SEU SITE
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
@@ -13,55 +12,69 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers // <--- NECESSÁRIO PARA PEGAR NOME DO DISCORD
     ]
 });
 
-client.once("ready", () => {
+client.once("clientReady", () => {
     console.log(`Bot online como: ${client.user.tag}`);
-
-    // 🔥 TESTE: verificar tipo da categoria
-    const guild = client.guilds.cache.get(process.env.GUILD_ID);
-    const canal = guild.channels.cache.get(process.env.CATEGORY_ID);
-
-    console.log(">>> TESTE DO CANAL <<<");
-    console.log("ID:", process.env.CATEGORY_ID);
-    console.log("Nome:", canal?.name || "NÃO ENCONTRADO");
-    console.log("Tipo:", canal?.type);
 });
 
+// 🚀 Rota do ticket
 app.post("/ticket", async (req, res) => {
     const { produto, preco, usuario, itens } = req.body;
+    // usuario = ID do usuário no Discord
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
         const categoria = process.env.CATEGORY_ID;
+        const cargoCEO = "1407038865914466451";
 
         if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
 
+        // 🔍 Buscar info do usuário pelo ID
+        const member = await guild.members.fetch(usuario).catch(() => null);
+
+        if (!member) {
+            return res.status(400).json({ error: "Usuário não encontrado no Discord" });
+        }
+
+        const nomeDiscord = member.user.username;
+
+        // Criar canal
         const ticketChannel = await guild.channels.create({
-            name: `ticket-${Date.now()}`,
+            name: `📩・ticket-${nomeDiscord}`,
             type: 0,
             parent: categoria,
             permissionOverwrites: [
                 {
                     id: guild.id,
                     deny: [PermissionsBitField.Flags.ViewChannel]
+                },
+                {
+                    id: usuario,
+                    allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
                 }
             ]
         });
 
+        // Mensagem
         await ticketChannel.send(`
-🎫 **Novo ticket criado!**
+📨 **NOVO TICKET ABERTO!**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-👤 Usuário: **${usuario}**
-🛒 Produto: **${produto}**
-💵 Total: **R$ ${preco}**
+👤 **Cliente:** <@${usuario}> (${nomeDiscord})
+🛒 **Produto:** ${produto}
+💵 **Valor Total:** R$ ${preco}
 
-🧾 **Itens:**
+🧾 **Itens Comprados:**
 ${itens}
 
-Aguarde um atendente.
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 <@&${cargoCEO}> um cliente abriu um ticket!
+
+Por favor, aguarde que você será atendido em breve. 💗
         `);
 
         return res.json({ ok: true });
@@ -72,7 +85,6 @@ Aguarde um atendente.
     }
 });
 
-// PORTA DO RENDER
 app.listen(process.env.PORT || 3000, () => {
     console.log("API rodando na porta " + (process.env.PORT || 3000));
 });

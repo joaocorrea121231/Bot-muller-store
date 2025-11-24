@@ -28,20 +28,24 @@ const client = new Client({
 client.once("ready", async () => {
     console.log(`Bot online como: ${client.user.tag}`);
 
-    // 🎀 ENVIAR CONVITE NO CANAL 1407038866552258592
+    // 🎀 ENVIAR EMBED + CONVITE DO SERVIDOR (COM PREVIEW)
     try {
         const conviteChannel = client.channels.cache.get("1407038866552258592");
 
         if (conviteChannel) {
-            const embedConvite = new EmbedBuilder()
-                .setTitle("💗 Convite do Servidor")
-                .setDescription(
-                    "Entre no nosso servidor através do link abaixo:\n\n" +
-                    "👉 **https://discord.gg/hCAxpwkQm2**"
-                )
-                .setColor("#FFB6C1"); // ROSA BEBÊ
 
+            const embedConvite = new EmbedBuilder()
+                .setTitle("🌸 Convite do Servidor")
+                .setDescription("Clique no link abaixo para entrar 💖")
+                .setColor("#FFB6C1") // ROSA BEBÊ
+                .setThumbnail("https://cdn.discordapp.com/icons/1407038865906208882/a.png?size=2048")
+                .setFooter({ text: "Muller Store — Seja bem-vindo(a)! 🌸" });
+
+            // ENVIA EMBED
             await conviteChannel.send({ embeds: [embedConvite] });
+
+            // ENVIA O LINK SOLO PARA GERAR A IMAGEM AUTOMÁTICA
+            await conviteChannel.send("https://discord.gg/hCAxpwkQm2");
 
             console.log("Convite enviado com sucesso!");
         }
@@ -49,7 +53,7 @@ client.once("ready", async () => {
         console.log("Erro ao enviar convite:", e);
     }
 
-    // ⚠️ PAINEL DE TICKET (se quiser remover, é só falar!)
+    // ⚠️ PAINEL DE TICKET
     try {
         const channel = client.channels.cache.get("1407103113403568210");
         if (channel) {

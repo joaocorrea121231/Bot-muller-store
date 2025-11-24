@@ -17,7 +17,7 @@ const client = new Client({
     ]
 });
 
-client.once("clientReady", () => {
+client.once("ready", () => {
     console.log(`Bot online como: ${client.user.tag}`);
 });
 
@@ -86,6 +86,7 @@ Agradecemos por comprar conosco 💗
 });
 
 
+
 // 📝 SISTEMA DE FECHAR O TICKET + LOG
 client.on("messageCreate", async (message) => {
     try {
@@ -96,7 +97,7 @@ client.on("messageCreate", async (message) => {
             const guild = message.guild;
 
             const canalLog = "1442642518842937577"; // Canal logs-ticket
-            const logChannel = guild.channels.cache.get(canalLog);
+            const logChannel = await guild.channels.fetch(canalLog).catch(() => null);
 
             if (!logChannel) {
                 return message.reply("❌ O canal de logs não foi encontrado!");
@@ -133,6 +134,7 @@ ${textoLog}
         console.error("Erro no fechamento:", err);
     }
 });
+
 
 
 app.listen(process.env.PORT || 3000, () => {

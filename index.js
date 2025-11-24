@@ -45,10 +45,8 @@ client.once("ready", async () => {
                     .setThumbnail("https://cdn.discordapp.com/icons/1407038865906208882/a.png?size=2048")
                     .setFooter({ text: "Muller Store — Seja bem-vindo(a)! 🌸" });
 
-                // ENVIA EMBED
                 await conviteChannel.send({ embeds: [embedConvite] });
 
-                // ENVIA O LINK PARA GERAR A IMAGEM DO DISCORD
                 await conviteChannel.send("https://discord.gg/hCAxpwkQm2");
 
                 conviteEnviado = true;
@@ -93,6 +91,26 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
         }
     } catch (e) {
         console.log("Erro ao enviar painel:", e);
+    }
+});
+
+
+// ⭐ DAR CARGO AUTOMÁTICO QUANDO A PESSOA ENTRA
+client.on("guildMemberAdd", async (member) => {
+    try {
+        const cargoID = "1407038865906208884"; 
+        const cargo = member.guild.roles.cache.get(cargoID);
+
+        if (!cargo) {
+            console.log("❌ Cargo não encontrado!");
+            return;
+        }
+
+        await member.roles.add(cargo);
+        console.log(`🌸 Cargo automático dado para: ${member.user.tag}`);
+
+    } catch (err) {
+        console.log("Erro ao dar cargo automático:", err);
     }
 });
 
@@ -245,7 +263,6 @@ client.on("messageCreate", async (message) => {
             });
 
             await message.channel.setParent(archiveCategory);
-
             await message.channel.setName(`📁・arquivo-${dono.user.username}`);
 
             await message.channel.send(`

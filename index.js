@@ -16,6 +16,9 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
+// 🔒 Evita SPAM — só envia convite 1 vez
+let conviteEnviado = false;
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -29,28 +32,31 @@ client.once("ready", async () => {
     console.log(`Bot online como: ${client.user.tag}`);
 
     // 🎀 ENVIAR EMBED + CONVITE DO SERVIDOR (COM PREVIEW)
-    try {
-        const conviteChannel = client.channels.cache.get("1407038866552258592");
+    if (!conviteEnviado) {
+        try {
+            const conviteChannel = client.channels.cache.get("1407038866552258592");
 
-        if (conviteChannel) {
+            if (conviteChannel) {
 
-            const embedConvite = new EmbedBuilder()
-                .setTitle("🌸 Convite do Servidor")
-                .setDescription("Clique no link abaixo para entrar 💖")
-                .setColor("#FFB6C1") // ROSA BEBÊ
-                .setThumbnail("https://cdn.discordapp.com/icons/1407038865906208882/a.png?size=2048")
-                .setFooter({ text: "Muller Store — Seja bem-vindo(a)! 🌸" });
+                const embedConvite = new EmbedBuilder()
+                    .setTitle("🌸 Convite do Servidor")
+                    .setDescription("Clique no link abaixo para entrar 💖")
+                    .setColor("#FFB6C1")
+                    .setThumbnail("https://cdn.discordapp.com/icons/1407038865906208882/a.png?size=2048")
+                    .setFooter({ text: "Muller Store — Seja bem-vindo(a)! 🌸" });
 
-            // ENVIA EMBED
-            await conviteChannel.send({ embeds: [embedConvite] });
+                // ENVIA EMBED
+                await conviteChannel.send({ embeds: [embedConvite] });
 
-            // ENVIA O LINK SOLO PARA GERAR A IMAGEM AUTOMÁTICA
-            await conviteChannel.send("https://discord.gg/hCAxpwkQm2");
+                // ENVIA O LINK PARA GERAR A IMAGEM DO DISCORD
+                await conviteChannel.send("https://discord.gg/hCAxpwkQm2");
 
-            console.log("Convite enviado com sucesso!");
+                conviteEnviado = true;
+                console.log("Convite enviado uma única vez!");
+            }
+        } catch (e) {
+            console.log("Erro ao enviar convite:", e);
         }
-    } catch (e) {
-        console.log("Erro ao enviar convite:", e);
     }
 
     // ⚠️ PAINEL DE TICKET
@@ -74,18 +80,9 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
                 .setCustomId("painel_ticket")
                 .setPlaceholder("Escolha uma categoria")
                 .addOptions(
-                    {
-                        label: "📦 Compra / Pedido",
-                        value: "compra"
-                    },
-                    {
-                        label: "❗ Problema / Erro",
-                        value: "problema"
-                    },
-                    {
-                        label: "💬 Suporte Geral",
-                        value: "geral"
-                    }
+                    { label: "📦 Compra / Pedido", value: "compra" },
+                    { label: "❗ Problema / Erro", value: "problema" },
+                    { label: "💬 Suporte Geral", value: "geral" }
                 );
 
             const row = new ActionRowBuilder().addComponents(menu);
@@ -100,7 +97,7 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
 });
 
 
-// 🚀 ROTA PARA CRIAR TICKET
+// 🚀 ROTA PARA CRIAR TICKET (API)
 app.post("/ticket", async (req, res) => {
     const { produto, preco, usuario, itens } = req.body;
 
@@ -151,7 +148,7 @@ app.post("/ticket", async (req, res) => {
 
 👤 **Cliente:** <@${usuario}> (${nomeDiscord})  
 🛍️ **Produto:** ${produto}  
-💳 **Total da compra:** R$ ${preco}  
+💳 **Total da compra:** R${preco}  
 
 🧾 **Itens:**  
 ${itens.split("\n").map(i => `• ${i}`).join("\n")}

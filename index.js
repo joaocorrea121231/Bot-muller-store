@@ -28,7 +28,28 @@ const client = new Client({
 client.once("ready", async () => {
     console.log(`Bot online como: ${client.user.tag}`);
 
-    // ⚠️ ENVIAR PAINEL AUTOMATICAMENTE AO INICIAR
+    // 🎀 ENVIAR CONVITE NO CANAL 1407038866552258592
+    try {
+        const conviteChannel = client.channels.cache.get("1407038866552258592");
+
+        if (conviteChannel) {
+            const embedConvite = new EmbedBuilder()
+                .setTitle("💗 Convite do Servidor")
+                .setDescription(
+                    "Entre no nosso servidor através do link abaixo:\n\n" +
+                    "👉 **https://discord.gg/hCAxpwkQm2**"
+                )
+                .setColor("#FFB6C1"); // ROSA BEBÊ
+
+            await conviteChannel.send({ embeds: [embedConvite] });
+
+            console.log("Convite enviado com sucesso!");
+        }
+    } catch (e) {
+        console.log("Erro ao enviar convite:", e);
+    }
+
+    // ⚠️ PAINEL DE TICKET (se quiser remover, é só falar!)
     try {
         const channel = client.channels.cache.get("1407103113403568210");
         if (channel) {
@@ -41,7 +62,7 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
 
 **Escolha uma categoria abaixo** para abrir seu atendimento.`
                 )
-                .setColor("#FFB6C1") // ROSA BEBÊ
+                .setColor("#FFB6C1")
                 .setImage("https://i.imgur.com/ewkxnYw.png")
                 .setTimestamp();
 
@@ -91,7 +112,6 @@ app.post("/ticket", async (req, res) => {
 
         const nomeDiscord = member.user.username;
 
-        // Criar canal
         const ticketChannel = await guild.channels.create({
             name: `📩・ticket-${nomeDiscord}`,
             type: 0,
@@ -121,7 +141,6 @@ app.post("/ticket", async (req, res) => {
             ]
         });
 
-        // Mensagem dentro do ticket
         await ticketChannel.send(`
 💌  **Novo Ticket Recebido**  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -200,7 +219,7 @@ Aguarde, nossa equipe irá te atender 💗`);
 });
 
 
-// 📝 SISTEMA DE FECHAR + ARQUIVAR
+// 📝 SISTEMA FECHAR + ARQUIVAR
 client.on("messageCreate", async (message) => {
     try {
         if (!message.channel.name.startsWith("📩・ticket-")) return;

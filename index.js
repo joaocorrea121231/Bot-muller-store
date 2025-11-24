@@ -24,16 +24,15 @@ client.once("ready", () => {
 
 // 🚀 ROTA PARA CRIAR TICKET
 app.post("/ticket", async (req, res) => {
-    const { produto, preco, usuario, itens } = req.body; // usuario = ID no Discord
+    const { produto, preco, usuario, itens } = req.body;
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
         const categoria = process.env.CATEGORY_ID;
-        const cargoCEO = "1407038865914466451";
+        const cargoCEO = "1407038865914466451"; // cargo mencionado no ticket
 
         if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
 
-        // Buscar usuário
         const member = await guild.members.fetch(usuario).catch(() => null);
         if (!member) return res.status(400).json({ error: "Usuário não encontrado" });
 
@@ -44,6 +43,7 @@ app.post("/ticket", async (req, res) => {
             name: `📩・ticket-${nomeDiscord}`,
             type: 0,
             parent: categoria,
+            topic: usuario, // ← DONO DO TICKET
             permissionOverwrites: [
                 {
                     id: guild.id,
@@ -53,13 +53,22 @@ app.post("/ticket", async (req, res) => {
                     id: usuario,
                     allow: [
                         PermissionsBitField.Flags.ViewChannel,
-                        PermissionsBitField.Flags.SendMessages
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.ReadMessageHistory
+                    ]
+                },
+                {
+                    id: cargoCEO,
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages,
+                        PermissionsBitField.Flags.ReadMessageHistory
                     ]
                 }
             ]
         });
 
-        // 📩 Mensagem personalizada dentro do ticket
+        // Mensagem dentro do ticket
         await ticketChannel.send(`
 💌  **Novo Ticket Recebido**  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -86,55 +95,48 @@ Agradecemos por comprar conosco 💗
 });
 
 
-
-// 📝 SISTEMA DE FECHAR O TICKET + LOG
+// 📝 SISTEMA DE FECHAR O TICKET + ARQUIVAR
 client.on("messageCreate", async (message) => {
     try {
         if (!message.channel.name.startsWith("📩・ticket-")) return;
         if (message.author.bot) return;
 
         if (message.content.toLowerCase() === "!fechar") {
+
             const guild = message.guild;
+            const archiveCategory = "1442642518842937577"; // categoria dos arquivados
 
-            const canalLog = "1442642518842937577"; // Canal logs-ticket
-            const logChannel = await guild.channels.fetch(canalLog).catch(() => null);
+            // Dono salvo no tópico
+            const donoId = message.channel.topic;
+            const dono = await guild.members.fetch(donoId).catch(() => null);
 
-            if (!logChannel) {
-                return message.reply("❌ O canal de logs não foi encontrado!");
+            if (!dono) {
+                return message.reply("❌ Não foi possível identificar o dono do ticket.");
             }
 
-            // Buscar mensagens do ticket
-            const msgs = await message.channel.messages.fetch({ limit: 100 });
-
-            const textoLog = msgs
-                .map(m => `[${m.author.tag}] ${m.content}`)
-                .reverse()
-                .join("\n");
-
-            // Mandar o histórico para o canal de logs
-            await logChannel.send({
-                content: `
-📁 **TICKET FECHADO**
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📌 **Canal:** ${message.channel.name}
-👤 **Fechado por:** ${message.author.tag}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧾 **Histórico Completo:**  
-\`\`\`
-${textoLog}
-\`\`\`
-`
+            // remover acesso do cliente
+            await message.channel.permissionOverwrites.edit(dono.id, {
+                ViewChannel: false,
+                SendMessages: false,
+                ReadMessageHistory: false
             });
 
-            await message.channel.send("💗 Ticket salvo e será fechado em 5 segundos...");
+            // mover para a categoria de arquivados
+            await message.channel.setParent(archiveCategory);
 
-            setTimeout(() => message.channel.delete(), 5000);
+            // renomear
+            await message.channel.setName(`📁・arquivo-${dono.user.username}`);
+
+            await message.channel.send(`
+🔒 **Ticket fechado com sucesso!**
+📁 O cliente não pode mais ver este canal.
+💗 Todas as mensagens foram preservadas para consulta.
+            `);
         }
     } catch (err) {
         console.error("Erro no fechamento:", err);
     }
 });
-
 
 
 app.listen(process.env.PORT || 3000, () => {

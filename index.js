@@ -107,10 +107,10 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
 
 Aqui, cada detalhe é feito com cuidado para que você se sinta única, especial e ainda mais linda. 🌟  
 
-### 🎀 Cabelos 2 em 1 e 3 em 1  
+### 🎀 Cabelos
 Modelos premium, acabamento impecável e feitos para trazer praticidade e beleza ao seu visual.
 
-### 🌈 Acessórios, props e presets faciais  
+### 🌈 Acessórios  
 Itens criativos, delicados e cheios de charme — do jeitinho que só a Muller Store sabe fazer.
 
 ### ✨ Novidades constantes  

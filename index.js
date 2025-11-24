@@ -5,10 +5,8 @@ require("dotenv").config();
 
 const app = express();
 
-// 🔥 LIBERA ACESSO DO SEU SITE
-app.use(cors({
-    origin: "*"
-}));
+// 🔥 Libera acesso do seu site
+app.use(cors({ origin: "*" }));
 
 app.use(express.json());
 
@@ -20,10 +18,12 @@ const client = new Client({
     ]
 });
 
+// Quando o bot ligar
 client.once("ready", () => {
     console.log(`Bot online como: ${client.user.tag}`);
 });
 
+// Rota para criar ticket
 app.post("/ticket", async (req, res) => {
     const { produto, preco, usuario, itens } = req.body;
 
@@ -31,11 +31,13 @@ app.post("/ticket", async (req, res) => {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
         const categoria = process.env.CATEGORY_ID;
 
-        if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
+        if (!guild) {
+            return res.status(500).json({ error: "Guild não encontrada" });
+        }
 
         const ticketChannel = await guild.channels.create({
             name: `ticket-${Date.now()}`,
-            type: 0,
+            type: 0, // Canal de texto
             parent: categoria,
             permissionOverwrites: [
                 {
@@ -66,9 +68,10 @@ Aguarde um atendente.
     }
 });
 
-// 🔥 PORTA CORRIGIDA PARA O RENDER
+// 🔥 Porta especial do Render
 app.listen(process.env.PORT || 3000, () => {
     console.log("API rodando na porta " + (process.env.PORT || 3000));
 });
 
+// Login do bot
 client.login(process.env.BOT_TOKEN);

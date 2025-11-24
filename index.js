@@ -1,11 +1,11 @@
 const express = require("express");
-const cors = require("cors");   // <--- ADICIONADO
+const cors = require("cors");
 const { Client, GatewayIntentBits, PermissionsBitField } = require("discord.js");
 require("dotenv").config();
 
 const app = express();
 
-// 🔥 LIBERA ACESSO DO SEU SITE
+// LIBERA ACESSO DO SEU SITE
 app.use(cors({
     origin: "*"
 }));
@@ -55,8 +55,9 @@ app.post("/ticket", async (req, res) => {
 🧾 **Itens:**
 ${itens}
 
-Aguarde um atendente.`);
-        
+Aguarde um atendente.
+        `);
+
         return res.json({ ok: true });
 
     } catch (err) {
@@ -65,8 +66,9 @@ Aguarde um atendente.`);
     }
 });
 
-app.listen(3000, () => {
-    console.log("API rodando na porta 3000");
+// 🔥 PORTA CORRIGIDA PARA O RENDER
+app.listen(process.env.PORT || 3000, () => {
+    console.log("API rodando na porta " + (process.env.PORT || 3000));
 });
 
 client.login(process.env.BOT_TOKEN);

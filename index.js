@@ -75,3 +75,4 @@ app.listen(process.env.PORT || 3000, () => {
 
 // Login do bot
 client.login(process.env.BOT_TOKEN);
+s

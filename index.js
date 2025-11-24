@@ -1,8 +1,15 @@
 const express = require("express");
+const cors = require("cors");   // <--- ADICIONADO
 const { Client, GatewayIntentBits, PermissionsBitField } = require("discord.js");
 require("dotenv").config();
 
 const app = express();
+
+// 🔥 LIBERA ACESSO DO SEU SITE
+app.use(cors({
+    origin: "*"
+}));
+
 app.use(express.json());
 
 const client = new Client({
@@ -18,14 +25,16 @@ client.once("ready", () => {
 });
 
 app.post("/ticket", async (req, res) => {
-    const { produto, preco, usuario } = req.body;
+    const { produto, preco, usuario, itens } = req.body;
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
         const categoria = process.env.CATEGORY_ID;
 
+        if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
+
         const ticketChannel = await guild.channels.create({
-            name: `ticket-${usuario}-${produto}`.toLowerCase(),
+            name: `ticket-${Date.now()}`,
             type: 0,
             parent: categoria,
             permissionOverwrites: [
@@ -36,14 +45,19 @@ app.post("/ticket", async (req, res) => {
             ]
         });
 
-        await ticketChannel.send(`🎫 **Novo ticket criado!**
+        await ticketChannel.send(`
+🎫 **Novo ticket criado!**
+
 👤 Usuário: **${usuario}**
 🛒 Produto: **${produto}**
-💵 Preço: **${preco}**
+💵 Total: **R$ ${preco}**
+
+🧾 **Itens:**
+${itens}
 
 Aguarde um atendente.`);
-
-        return res.json({ ok: true, channel: ticketChannel.id });
+        
+        return res.json({ ok: true });
 
     } catch (err) {
         console.error(err);

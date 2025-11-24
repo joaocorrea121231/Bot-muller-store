@@ -23,8 +23,7 @@ client.once("clientReady", () => {
 
 // 🚀 Rota do ticket
 app.post("/ticket", async (req, res) => {
-    const { produto, preco, usuario, itens } = req.body;
-    // usuario = ID do usuário no Discord
+    const { produto, preco, usuario, itens } = req.body; // usuario = ID do Discord
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
@@ -35,7 +34,6 @@ app.post("/ticket", async (req, res) => {
 
         // 🔍 Buscar info do usuário pelo ID
         const member = await guild.members.fetch(usuario).catch(() => null);
-
         if (!member) {
             return res.status(400).json({ error: "Usuário não encontrado no Discord" });
         }
@@ -54,27 +52,30 @@ app.post("/ticket", async (req, res) => {
                 },
                 {
                     id: usuario,
-                    allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages]
+                    allow: [
+                        PermissionsBitField.Flags.ViewChannel,
+                        PermissionsBitField.Flags.SendMessages
+                    ]
                 }
             ]
         });
 
-        // Mensagem
+        // 💌 --- MENSAGEM FOFA DO TICKET ---
         await ticketChannel.send(`
-📨 **NOVO TICKET ABERTO!**
+💌  **Novo Ticket Recebido**  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-👤 **Cliente:** <@${usuario}> (${nomeDiscord})
-🛒 **Produto:** ${produto}
-💵 **Valor Total:** R$ ${preco}
+👤 **Cliente:** <@${usuario}> (${nomeDiscord})  
+🛍️ **Produto:** ${produto}  
+💳 **Total da compra:** R$ ${preco}  
 
-🧾 **Itens Comprados:**
-${itens}
+🧾 **Itens:**  
+${itens.split("\n").map(i => `• ${i}`).join("\n")}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 <@&${cargoCEO}> um cliente abriu um ticket!
-
-Por favor, aguarde que você será atendido em breve. 💗
+✨ <@&${cargoCEO}>, sua atenção é necessária.  
+Agradecemos por comprar conosco 💗  
+**Muller Store — sempre com carinho.** ✨
         `);
 
         return res.json({ ok: true });

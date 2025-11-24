@@ -13,7 +13,7 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers // <--- NECESSÁRIO PARA PEGAR NOME DO DISCORD
+        GatewayIntentBits.GuildMembers
     ]
 });
 
@@ -21,9 +21,10 @@ client.once("clientReady", () => {
     console.log(`Bot online como: ${client.user.tag}`);
 });
 
-// 🚀 Rota do ticket
+
+// 🚀 ROTA PARA CRIAR TICKET
 app.post("/ticket", async (req, res) => {
-    const { produto, preco, usuario, itens } = req.body; // usuario = ID do Discord
+    const { produto, preco, usuario, itens } = req.body; // usuario = ID no Discord
 
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
@@ -32,15 +33,13 @@ app.post("/ticket", async (req, res) => {
 
         if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
 
-        // 🔍 Buscar info do usuário pelo ID
+        // Buscar usuário
         const member = await guild.members.fetch(usuario).catch(() => null);
-        if (!member) {
-            return res.status(400).json({ error: "Usuário não encontrado no Discord" });
-        }
+        if (!member) return res.status(400).json({ error: "Usuário não encontrado" });
 
         const nomeDiscord = member.user.username;
 
-        // Criar canal
+        // Criar o canal do ticket
         const ticketChannel = await guild.channels.create({
             name: `📩・ticket-${nomeDiscord}`,
             type: 0,
@@ -60,7 +59,7 @@ app.post("/ticket", async (req, res) => {
             ]
         });
 
-        // 💌 --- MENSAGEM FOFA DO TICKET ---
+        // 📩 Mensagem personalizada dentro do ticket
         await ticketChannel.send(`
 💌  **Novo Ticket Recebido**  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -85,6 +84,56 @@ Agradecemos por comprar conosco 💗
         return res.status(500).json({ error: "Erro ao criar ticket" });
     }
 });
+
+
+// 📝 SISTEMA DE FECHAR O TICKET + LOG
+client.on("messageCreate", async (message) => {
+    try {
+        if (!message.channel.name.startsWith("📩・ticket-")) return;
+        if (message.author.bot) return;
+
+        if (message.content.toLowerCase() === "!fechar") {
+            const guild = message.guild;
+
+            const canalLog = "1442642518842937577"; // Canal logs-ticket
+            const logChannel = guild.channels.cache.get(canalLog);
+
+            if (!logChannel) {
+                return message.reply("❌ O canal de logs não foi encontrado!");
+            }
+
+            // Buscar mensagens do ticket
+            const msgs = await message.channel.messages.fetch({ limit: 100 });
+
+            const textoLog = msgs
+                .map(m => `[${m.author.tag}] ${m.content}`)
+                .reverse()
+                .join("\n");
+
+            // Mandar o histórico para o canal de logs
+            await logChannel.send({
+                content: `
+📁 **TICKET FECHADO**
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 **Canal:** ${message.channel.name}
+👤 **Fechado por:** ${message.author.tag}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧾 **Histórico Completo:**  
+\`\`\`
+${textoLog}
+\`\`\`
+`
+            });
+
+            await message.channel.send("💗 Ticket salvo e será fechado em 5 segundos...");
+
+            setTimeout(() => message.channel.delete(), 5000);
+        }
+    } catch (err) {
+        console.error("Erro no fechamento:", err);
+    }
+});
+
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("API rodando na porta " + (process.env.PORT || 3000));

@@ -92,6 +92,48 @@ Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
     } catch (e) {
         console.log("Erro ao enviar painel:", e);
     }
+
+    // 💗 EMBED “QUEM SOMOS — MULLER STORE”
+    try {
+        const canalInfo = client.channels.cache.get("1442654966001959002");
+
+        if (canalInfo) {
+            const embedInfo = new EmbedBuilder()
+                .setTitle("💗 QUEM SOMOS — Muller Store")
+                .setColor("#FFB6C1")
+                .setThumbnail("https://cdn.discordapp.com/icons/1407038865906208882/a.png?size=2048")
+                .setDescription(
+`A **Muller Store** nasceu do carinho e criatividade de **Pipokinha & Kira**, duas amigas que transformaram amor, estilo e inspiração em uma loja cheia de personalidade. 🌸✨  
+
+Aqui, cada detalhe é feito com cuidado para que você se sinta única, especial e ainda mais linda. 🌟  
+
+### 🎀 Cabelos 2 em 1 e 3 em 1  
+Modelos premium, acabamento impecável e feitos para trazer praticidade e beleza ao seu visual.
+
+### 🌈 Acessórios, props e presets faciais  
+Itens criativos, delicados e cheios de charme — do jeitinho que só a Muller Store sabe fazer.
+
+### ✨ Novidades constantes  
+Sempre criando, inovando e trazendo o melhor antes de todo mundo.
+
+---
+
+Na Muller Store, nossa missão é trazer **confiança, estilo e fofura** ao seu dia.  
+Trabalhamos com carinho para entregar sempre o melhor pra você. 💞✨  
+
+**Com amor,  
+Pipokinha & Kira — Muller Store 💗🌸**`
+                )
+                .setFooter({ text: "Muller Store — Qualidade e Carinho 💗" });
+
+            await canalInfo.send({ embeds: [embedInfo] });
+            console.log("Embed 'Quem Somos' enviado!");
+        }
+
+    } catch (err) {
+        console.log("Erro ao enviar embed Quem Somos:", err);
+    }
+
 });
 
 

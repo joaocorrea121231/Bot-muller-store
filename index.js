@@ -1,6 +1,14 @@
 const express = require("express");
 const cors = require("cors");
-const { Client, GatewayIntentBits, PermissionsBitField } = require("discord.js");
+const { 
+    Client, 
+    GatewayIntentBits, 
+    PermissionsBitField,
+    EmbedBuilder,
+    ActionRowBuilder,
+    StringSelectMenuBuilder
+} = require("discord.js");
+
 require("dotenv").config();
 
 const app = express();
@@ -17,8 +25,53 @@ const client = new Client({
     ]
 });
 
-client.once("ready", () => {
+client.once("ready", async () => {
     console.log(`Bot online como: ${client.user.tag}`);
+
+    // ⚠️ ENVIAR PAINEL AUTOMATICAMENTE AO INICIAR
+    try {
+        const channel = client.channels.cache.get("1407103113403568210");
+        if (channel) {
+
+            const embed = new EmbedBuilder()
+                .setTitle("Sistema de Atendimento - Muller Store")
+                .setDescription(
+`Bem-vindo(a) ao **atendimento da Muller Store** 💗  
+Aqui você poderá abrir um ticket e falar diretamente com nossa equipe!
+
+**Escolha uma categoria abaixo** para abrir seu atendimento.`
+                )
+                .setColor("#FFB6C1") // ROSA BEBÊ
+                .setImage("https://i.imgur.com/ewkxnYw.png")
+                .setTimestamp();
+
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId("painel_ticket")
+                .setPlaceholder("Escolha uma categoria")
+                .addOptions(
+                    {
+                        label: "📦 Compra / Pedido",
+                        value: "compra"
+                    },
+                    {
+                        label: "❗ Problema / Erro",
+                        value: "problema"
+                    },
+                    {
+                        label: "💬 Suporte Geral",
+                        value: "geral"
+                    }
+                );
+
+            const row = new ActionRowBuilder().addComponents(menu);
+
+            await channel.send({ embeds: [embed], components: [row] });
+
+            console.log("Painel de ticket enviado com sucesso!");
+        }
+    } catch (e) {
+        console.log("Erro ao enviar painel:", e);
+    }
 });
 
 
@@ -29,7 +82,7 @@ app.post("/ticket", async (req, res) => {
     try {
         const guild = client.guilds.cache.get(process.env.GUILD_ID);
         const categoria = process.env.CATEGORY_ID;
-        const cargoCEO = "1407038865914466451"; // cargo mencionado no ticket
+        const cargoCEO = "1407038865914466451";
 
         if (!guild) return res.status(500).json({ error: "Guild não encontrada" });
 
@@ -38,12 +91,12 @@ app.post("/ticket", async (req, res) => {
 
         const nomeDiscord = member.user.username;
 
-        // Criar o canal do ticket
+        // Criar canal
         const ticketChannel = await guild.channels.create({
             name: `📩・ticket-${nomeDiscord}`,
             type: 0,
             parent: categoria,
-            topic: usuario, // ← DONO DO TICKET
+            topic: usuario,
             permissionOverwrites: [
                 {
                     id: guild.id,
@@ -95,7 +148,59 @@ Agradecemos por comprar conosco 💗
 });
 
 
-// 📝 SISTEMA DE FECHAR O TICKET + ARQUIVAR
+// 💗 ABRIR TICKET PELO MENU
+client.on("interactionCreate", async (interaction) => {
+    if (!interaction.isStringSelectMenu()) return;
+    if (interaction.customId !== "painel_ticket") return;
+
+    const guild = interaction.guild;
+    const categoria = process.env.CATEGORY_ID;
+    const cargoCEO = "1407038865914466451";
+    const escolha = interaction.values[0];
+
+    const ticketChannel = await guild.channels.create({
+        name: `📩・ticket-${interaction.user.username}`,
+        type: 0,
+        parent: categoria,
+        topic: interaction.user.id,
+        permissionOverwrites: [
+            {
+                id: guild.id,
+                deny: [PermissionsBitField.Flags.ViewChannel]
+            },
+            {
+                id: interaction.user.id,
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.ReadMessageHistory
+                ]
+            },
+            {
+                id: cargoCEO,
+                allow: [
+                    PermissionsBitField.Flags.ViewChannel,
+                    PermissionsBitField.Flags.SendMessages,
+                    PermissionsBitField.Flags.ReadMessageHistory
+                ]
+            }
+        ]
+    });
+
+    await interaction.reply({ content: "💗 Seu ticket foi aberto!", ephemeral: true });
+
+    await ticketChannel.send(`
+💌 **Novo Ticket Aberto**
+━━━━━━━━━━━━━━━━━━━━━━
+
+👤 **Cliente:** <@${interaction.user.id}>
+📁 **Categoria:** ${escolha}
+
+Aguarde, nossa equipe irá te atender 💗`);
+});
+
+
+// 📝 SISTEMA DE FECHAR + ARQUIVAR
 client.on("messageCreate", async (message) => {
     try {
         if (!message.channel.name.startsWith("📩・ticket-")) return;
@@ -104,9 +209,8 @@ client.on("messageCreate", async (message) => {
         if (message.content.toLowerCase() === "!fechar") {
 
             const guild = message.guild;
-            const archiveCategory = "1442642518842937577"; // categoria dos arquivados
+            const archiveCategory = "1442642518842937577";
 
-            // Dono salvo no tópico
             const donoId = message.channel.topic;
             const dono = await guild.members.fetch(donoId).catch(() => null);
 
@@ -114,24 +218,20 @@ client.on("messageCreate", async (message) => {
                 return message.reply("❌ Não foi possível identificar o dono do ticket.");
             }
 
-            // remover acesso do cliente
             await message.channel.permissionOverwrites.edit(dono.id, {
                 ViewChannel: false,
                 SendMessages: false,
                 ReadMessageHistory: false
             });
 
-            // mover para a categoria de arquivados
             await message.channel.setParent(archiveCategory);
 
-            // renomear
             await message.channel.setName(`📁・arquivo-${dono.user.username}`);
 
             await message.channel.send(`
 🔒 **Ticket fechado com sucesso!**
 📁 O cliente não pode mais ver este canal.
-💗 Todas as mensagens foram preservadas para consulta.
-            `);
+💗 Todas as mensagens foram preservadas para consulta.`);
         }
     } catch (err) {
         console.error("Erro no fechamento:", err);
